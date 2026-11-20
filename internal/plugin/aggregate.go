@@ -274,6 +274,8 @@ type GroupStatsPage struct {
 }
 
 type APIKeyOption struct {
+	Counters
+
 	Ref        string `json:"ref"`
 	Hash       string `json:"hash"`
 	Generation uint64 `json:"generation"`
@@ -349,6 +351,7 @@ func buildStatsForRangeWithFilter(data map[aggregateKey]Counters, since, lastUse
 	summary := Counters{}
 	sources := make(map[string]struct{})
 	apiKeyRefs := make(map[string]struct{})
+	apiKeyCounters := make(map[string]Counters)
 	for key, counters := range data {
 		bucketTime := time.Unix(key.Hour, 0).UTC()
 		if !queryRange.Start.IsZero() && bucketTime.Before(queryRange.Start) {
@@ -366,6 +369,11 @@ func buildStatsForRangeWithFilter(data map[aggregateKey]Counters, since, lastUse
 		}
 		if !filter.matches(dimensions) {
 			continue
+		}
+		if ref := apiKeyRef(dimensions.APIKeyGeneration, dimensions.APIKeyHash); ref != "" {
+			value := apiKeyCounters[ref]
+			value.add(counters)
+			apiKeyCounters[ref] = value
 		}
 		identity := groupIdentity(dimensions)
 		group := groups[identity]
@@ -449,7 +457,7 @@ func buildStatsForRangeWithFilter(data map[aggregateKey]Counters, since, lastUse
 	apiKeys := make([]APIKeyOption, 0, len(apiKeyRefs))
 	for ref := range apiKeyRefs {
 		generation, hash, _ := parseAPIKeyRef(ref)
-		apiKeys = append(apiKeys, APIKeyOption{Ref: ref, Hash: hash, Generation: generation, Key: apiKeyCiphertexts[ref]})
+		apiKeys = append(apiKeys, APIKeyOption{Counters: apiKeyCounters[ref], Ref: ref, Hash: hash, Generation: generation, Key: apiKeyCiphertexts[ref]})
 	}
 	sort.Slice(apiKeys, func(i, j int) bool { return apiKeys[i].Ref < apiKeys[j].Ref })
 
@@ -619,12 +627,23 @@ func sortedStatsAPIKeys(refs map[string]struct{}, ciphertexts map[string]string)
 	return values
 }
 
+// statsAPIKeysWithCounters retains the unfiltered option catalog while attaching
+// totals from the active time, source and API-key filters. It never changes stored data.
+func statsAPIKeysWithCounters(refs map[string]struct{}, ciphertexts map[string]string, counters map[string]Counters) []APIKeyOption {
+	values := sortedStatsAPIKeys(refs, ciphertexts)
+	for i := range values {
+		values[i].Counters = counters[values[i].Ref]
+	}
+	return values
+}
+
 func buildInitialStatsForRange(data map[aggregateKey]Counters, since, lastUsed time.Time, queryRange usageRange, filter usageFilter, now time.Time, apiKeyCiphertexts map[string]string) InitialStatsResponse {
 	bucketSeconds := compactBucketSeconds(queryRange, since, now)
 	series := make(map[int64]Counters)
 	models := make(map[string]Counters)
 	sources := make(map[string]struct{})
 	apiKeyRefs := make(map[string]struct{})
+	apiKeyCounters := make(map[string]Counters)
 	summary := Counters{}
 	for key, counters := range data {
 		bucketTime := time.Unix(key.Hour, 0).UTC()
@@ -641,6 +660,11 @@ func buildInitialStatsForRange(data map[aggregateKey]Counters, since, lastUsed t
 		if !filter.matches(dimensions) {
 			continue
 		}
+		if ref := apiKeyRef(dimensions.APIKeyGeneration, dimensions.APIKeyHash); ref != "" {
+			value := apiKeyCounters[ref]
+			value.add(counters)
+			apiKeyCounters[ref] = value
+		}
 		seriesKey := compactBucket(key.Hour, bucketSeconds)
 		point := series[seriesKey]
 		point.add(counters)
@@ -656,7 +680,7 @@ func buildInitialStatsForRange(data map[aggregateKey]Counters, since, lastUsed t
 		sourceValues = append(sourceValues, source)
 	}
 	sort.Strings(sourceValues)
-	return InitialStatsResponse{SchemaVersion: 2, GeneratedAt: now.UTC(), Range: queryRange.Name, RetainedSince: since.UTC(), LastUsed: lastUsed.UTC(), BucketSeconds: bucketSeconds, Summary: summary, Models: sortedCompactModels(models), Series: sortedCompactSeries(series), Sources: sourceValues, APIKeys: sortedStatsAPIKeys(apiKeyRefs, apiKeyCiphertexts)}
+	return InitialStatsResponse{SchemaVersion: 2, GeneratedAt: now.UTC(), Range: queryRange.Name, RetainedSince: since.UTC(), LastUsed: lastUsed.UTC(), BucketSeconds: bucketSeconds, Summary: summary, Models: sortedCompactModels(models), Series: sortedCompactSeries(series), Sources: sourceValues, APIKeys: statsAPIKeysWithCounters(apiKeyRefs, apiKeyCiphertexts, apiKeyCounters)}
 }
 
 func buildStatsTrendForRange(data map[aggregateKey]Counters, since time.Time, queryRange usageRange, filter usageFilter, now time.Time) StatsTrendResponse {

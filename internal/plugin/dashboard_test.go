@@ -643,7 +643,8 @@ func TestDashboardUsesExactBackendCostsAndPricingSync(t *testing.T) {
 		`fetch('https://open.er-api.com`,
 		`fetch("https://open.er-api.com`,
 	} {
-		if strings.Contains(html, forbidden) {
+		// Full mode may read CPAMC name records, but pricing/auth code must not use storage.
+		if strings.Contains(strings.Replace(html, cpamcNamesScript, "", 1), forbidden) {
 			t.Fatalf("dashboard contains forbidden pricing pattern %q", forbidden)
 		}
 	}

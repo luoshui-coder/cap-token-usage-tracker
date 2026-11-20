@@ -9,7 +9,25 @@ dist/
 *.db
 *.db.lock
 *.db.tmp
+*.db-*
+*.sqlite*
 data/
+
+# Deployment files and credentials stay on the local machine or server.
+.env
+.env.*
+!.env.example
+config.yaml
+config.yml
+docker-compose.override.yml
+docker-compose.override.yaml
+auths/
+logs/
+backups/
+*.pem
+*.key
+*.tar.gz
+*.zip
 
 # Local toolchains
 .tools/

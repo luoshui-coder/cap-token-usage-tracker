@@ -354,5 +354,14 @@
   "pricing.timeAdd": "添加时段",
   "pricing.timeHelp": "按请求时间计费，包含开始、不包含结束。跨午夜归属起始日；未命中使用基础/服务等级价格，上下文阶梯优先。修改后重新估算历史费用。",
   "pricing.timeInvalid": "时间价格无效：请检查名称、时区、星期和时间（最多32个时段）。",
-  "pricing.timeOverlap": "价格时段重叠。"
+  "pricing.timeOverlap": "价格时段重叠。",
+  "apiKey.shareTitle": "按人用量占比",
+  "apiKey.shareHint": "按时间、来源和 API Key 筛选统计；费用按模型价格估算，* 表示部分请求未定价。自动同步当前浏览器的 CPA 管理端备注，也可点击铅笔设置。",
+  "apiKey.name": "名称／说明",
+  "apiKey.failed": "失败次数",
+  "apiKey.share": "占比",
+  "apiKey.unnamed": "未设置备注",
+  "apiKey.untracked": "未记录密钥",
+  "apiKey.totalCost": "总费用",
+  "apiKey.costHint": "按模型价格估算；* 表示部分请求未定价"
 }

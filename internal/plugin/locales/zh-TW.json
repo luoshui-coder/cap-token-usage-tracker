@@ -354,5 +354,14 @@
   "pricing.timeAdd": "新增時段",
   "pricing.timeHelp": "依請求時間計費，包含開始、不包含結束。跨午夜歸屬起始日；未命中使用基礎/服務等級價格，上下文階梯優先。修改後重新估算歷史費用。",
   "pricing.timeInvalid": "時間價格無效：請檢查名稱、時區、星期與時間（最多32個時段）。",
-  "pricing.timeOverlap": "價格時段重疊。"
+  "pricing.timeOverlap": "價格時段重疊。",
+  "apiKey.shareTitle": "按人用量佔比",
+  "apiKey.shareHint": "依時間、來源和 API Key 篩選；費用依模型價格估算，* 表示部分請求未定價。自動同步目前瀏覽器的 CPA 備註，也可點擊鉛筆設定。",
+  "apiKey.name": "名稱／說明",
+  "apiKey.failed": "失敗次數",
+  "apiKey.share": "佔比",
+  "apiKey.unnamed": "未設定備註",
+  "apiKey.untracked": "未記錄金鑰",
+  "apiKey.totalCost": "總費用",
+  "apiKey.costHint": "依模型價格估算；* 表示部分請求未定價"
 }

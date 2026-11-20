@@ -47,6 +47,11 @@ type ModelCostStats struct {
 	CostAmounts
 }
 
+type APIKeyCostStats struct {
+	Ref string `json:"ref"`
+	CostAmounts
+}
+
 type CostSeriesPoint struct {
 	Hour     string `json:"hour"`
 	Provider string `json:"provider"`
@@ -71,9 +76,10 @@ type CostResponse struct {
 	Models            []ModelCostStats    `json:"models"`
 	Series            []CostSeriesPoint   `json:"series"`
 	MissingPrices     []MissingPriceStats `json:"missing_prices"`
+	APIKeys           []APIKeyCostStats   `json:"api_keys,omitempty"`
 }
 
-func (c *CostResponse) Redact() {}
+func (c *CostResponse) Redact() { c.APIKeys = nil }
 
 func (c *CostResponse) Reveal(decrypt DecryptFunc) {}
 
@@ -263,6 +269,7 @@ func (s *Store) queryCostsByFilter(queryRange usageRange, filter usageFilter) (C
 }
 
 func cloneCostResponse(input CostResponse) CostResponse {
+	input.APIKeys = append([]APIKeyCostStats(nil), input.APIKeys...)
 	input.Models = append([]ModelCostStats(nil), input.Models...)
 	input.Series = append([]CostSeriesPoint(nil), input.Series...)
 	input.MissingPrices = append([]MissingPriceStats(nil), input.MissingPrices...)
@@ -284,6 +291,7 @@ func (s *Store) scanCosts(snapshot costQuerySnapshot) (CostResponse, error) {
 		Provider, Model string
 	}
 	models := make(map[modelKey]CostAmounts)
+	apiKeys := make(map[string]CostAmounts)
 	series := make(map[seriesKey]CostAmounts)
 	missing := make(map[modelKey]uint64)
 	resolver := newModelPriceResolver(snapshot.Prices, snapshot.PriceSettings)
@@ -329,6 +337,10 @@ func (s *Store) scanCosts(snapshot costQuerySnapshot) (CostResponse, error) {
 			modelAmounts := models[mKey]
 			seriesAmounts := series[sKey]
 			addEstimatedCost(&response.Summary, cost)
+			ref := apiKeyRef(request.APIKeyGeneration, request.APIKeyHash)
+			keyAmounts := apiKeys[ref]
+			addEstimatedCost(&keyAmounts, cost)
+			apiKeys[ref] = keyAmounts
 			addEstimatedCost(&modelAmounts, cost)
 			addEstimatedCost(&seriesAmounts, cost)
 			models[mKey] = modelAmounts
@@ -343,6 +355,10 @@ func (s *Store) scanCosts(snapshot costQuerySnapshot) (CostResponse, error) {
 		return CostResponse{}, fmt.Errorf("query estimated costs: %w", err)
 	}
 
+	for ref, amounts := range apiKeys {
+		response.APIKeys = append(response.APIKeys, APIKeyCostStats{Ref: ref, CostAmounts: amounts})
+	}
+	sort.Slice(response.APIKeys, func(i, j int) bool { return response.APIKeys[i].Ref < response.APIKeys[j].Ref })
 	response.Models = make([]ModelCostStats, 0, len(models))
 	for key, amounts := range models {
 		response.Models = append(response.Models, ModelCostStats{Provider: key.Provider, Model: key.Model, CostAmounts: amounts})

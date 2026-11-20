@@ -354,5 +354,14 @@
   "pricing.timeAdd": "Add period",
   "pricing.timeHelp": "Use request time; start included, end excluded. Overnight periods belong to the starting day. Unmatched periods use base/service prices; context tiers take precedence. Changes recalculate historical estimates.",
   "pricing.timeInvalid": "Invalid time pricing: check names, zone, weekdays and times (maximum 32 periods).",
-  "pricing.timeOverlap": "Time periods overlap."
+  "pricing.timeOverlap": "Time periods overlap.",
+  "apiKey.shareTitle": "API Key usage share",
+  "apiKey.shareHint": "Time, source and API Key filters apply. Costs use model prices; * indicates incomplete pricing. Names sync from this browser’s CPA management panel or can be edited using the pencil.",
+  "apiKey.name": "Name / description",
+  "apiKey.failed": "Failures",
+  "apiKey.share": "Share",
+  "apiKey.unnamed": "No name set",
+  "apiKey.untracked": "Untracked key",
+  "apiKey.totalCost": "Total cost",
+  "apiKey.costHint": "Estimated from model prices; * indicates unpriced requests"
 }

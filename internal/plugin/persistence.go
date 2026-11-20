@@ -1805,6 +1805,12 @@ func validateAPIKeyLabels(labels map[string]string) error {
 
 func (a *storeActor) retainedAPIKeyRefs() map[string]struct{} {
 	refs := make(map[string]struct{})
+	// The catalog includes persisted history outside the in-memory hot window.
+	for ref, entry := range a.apiKeyCatalog {
+		if entry.Hours > 0 || entry.Requests > 0 {
+			refs[ref] = struct{}{}
+		}
+	}
 	for key := range a.data {
 		if ref := apiKeyRef(key.Dimensions.APIKeyGeneration, key.Dimensions.APIKeyHash); ref != "" {
 			refs[ref] = struct{}{}
